@@ -1,0 +1,57 @@
+name: Compile and Release LaTeX Project
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Check out the code
+    - name: Check out repository
+      uses: actions/checkout@v3
+
+    # Step 2: Set up LaTeX environment
+    - name: Set up LaTeX
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y texlive-full
+
+    # Step 3: Compile the LaTeX file
+    - name: Compile LaTeX document
+      run: |
+        pdflatex -interaction=nonstopmode -halt-on-error -output-directory=output pre.tex
+
+    # Step 4: Upload compiled PDF as an artifact for easy debugging (optional)
+    - name: Upload PDF artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: Compiled-PDF
+        path: output/pre.pdf
+
+    # Step 5: Create GitHub Release
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ github.run_number }}
+        release_name: "LaTeX Release v${{ github.run_number }}"
+        draft: false
+        prerelease: false
+
+    # Step 6: Upload PDF to Release
+    - name: Upload PDF to Release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: output/pre.pdf
+        asset_name: presentation.pdf
+        asset_content_type: application/pdf
