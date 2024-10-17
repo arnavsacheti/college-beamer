@@ -19,7 +19,15 @@ jobs:
     - name: Set up LaTeX
       run: |
         sudo apt-get update -y
-        sudo apt-get install -y texlive-full
+        sudo apt-get install -y \
+          texlive-latex-recommended \
+          texlive-latex-extra \
+          texlive-fonts-recommended
+          
+    - name: Install Additional LaTeX Packages
+      run: |
+        sudo tlmgr init-usertree
+        tlmgr install pgf tikz beamer
 
     # Step 3: Create the output directory with correct permissions
     - name: Create output directory
