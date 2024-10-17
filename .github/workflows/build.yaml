@@ -7,64 +7,34 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build_latex:
     runs-on: ubuntu-latest
-
     steps:
-    # Step 1: Check out the code
-    - name: Check out repository
-      uses: actions/checkout@v3
+      - name: Set up Git repository
+        uses: actions/checkout@v4
 
-    # Step 2: Set up LaTeX environment
-    - name: Set up LaTeX
-      run: |
-        sudo apt-get update -y
-        sudo apt-get install -y \
-          texlive-latex-recommended \
-          texlive-latex-extra \
-          texlive-fonts-recommended
-          
-    - name: Install Additional LaTeX Packages
-      run: |
-        sudo tlmgr init-usertree
-        tlmgr install pgf tikz beamer
+      - name: Compile LaTeX document
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: pre.tex
 
-    # Step 3: Create the output directory with correct permissions
-    - name: Create output directory
-      run: mkdir -p output && chmod 777 output
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.run_number }}
+          release_name: "LaTeX Release v${{ github.run_number }}"
+          draft: false
+          prerelease: false
 
-    # Step 4: Compile the LaTeX file
-    - name: Compile LaTeX document
-      run: |
-        pdflatex -interaction=nonstopmode -halt-on-error -output-directory=output pre.tex
-      # Make sure to adjust "pre.tex" to your main .tex filename
-
-    # Step 5: Upload PDF artifact (optional)
-    - name: Upload PDF artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: Compiled-PDF
-        path: output/pre.pdf
-
-    # Step 6: Create Release
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: v${{ github.run_number }}
-        release_name: "LaTeX Release v${{ github.run_number }}"
-        draft: false
-        prerelease: false
-
-    # Step 7: Upload PDF to Release
-    - name: Upload PDF to Release
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: output/pre.pdf
-        asset_name: pre.pdf
-        asset_content_type: application/pdf
+      - name: Upload PDF to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: pre.pdf
+          asset_name: presentation.pdf
+          asset_content_type: application/pdf
