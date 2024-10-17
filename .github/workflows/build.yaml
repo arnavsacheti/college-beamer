@@ -21,19 +21,24 @@ jobs:
         sudo apt-get update -y
         sudo apt-get install -y texlive-full
 
-    # Step 3: Compile the LaTeX file
+    # Step 3: Create the output directory with correct permissions
+    - name: Create output directory
+      run: mkdir -p output && chmod 777 output
+
+    # Step 4: Compile the LaTeX file
     - name: Compile LaTeX document
       run: |
         pdflatex -interaction=nonstopmode -halt-on-error -output-directory=output pre.tex
+      # Make sure to adjust "pre.tex" to your main .tex filename
 
-    # Step 4: Upload compiled PDF as an artifact for easy debugging (optional)
+    # Step 5: Upload PDF artifact (optional)
     - name: Upload PDF artifact
       uses: actions/upload-artifact@v3
       with:
         name: Compiled-PDF
         path: output/pre.pdf
 
-    # Step 5: Create GitHub Release
+    # Step 6: Create Release
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -45,7 +50,7 @@ jobs:
         draft: false
         prerelease: false
 
-    # Step 6: Upload PDF to Release
+    # Step 7: Upload PDF to Release
     - name: Upload PDF to Release
       uses: actions/upload-release-asset@v1
       env:
@@ -53,5 +58,5 @@ jobs:
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: output/pre.pdf
-        asset_name: presentation.pdf
+        asset_name: pre.pdf
         asset_content_type: application/pdf
